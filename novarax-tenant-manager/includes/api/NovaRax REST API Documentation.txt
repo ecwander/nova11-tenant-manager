@@ -1,0 +1,513 @@
+# NovaRax REST API Documentation
+
+## 📡 API Overview
+
+Base URL: `https://yourdomain.com/wp-json/novarax/v1`
+
+All API endpoints use standard WordPress REST API structure.
+
+---
+
+## 🔐 Authentication
+
+Two authentication methods are supported:
+
+### Method 1: JWT Token (Recommended)
+```
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+```
+
+### Method 2: API Key
+```
+Authorization: ApiKey novarax_abc123def456...
+```
+
+---
+
+## 📋 API Endpoints
+
+### 1. **Validate Session**
+
+**Endpoint:** `POST /validate-session`
+
+**Purpose:** Check if a user session is valid and get user/tenant information
+
+**Authentication:** Public (uses token in body)
+
+**Request Body:**
+```json
+{
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "subdomain": "john.yourdomain.com"
+}
+```
+
+**Success Response (200):**
+```json
+{
+  "valid": true,
+  "user": {
+    "id": 123,
+    "username": "john",
+    "email": "john@example.com",
+    "display_name": "John Doe"
+  },
+  "tenant": {
+    "id": 45,
+    "username": "john",
+    "account_name": "John's Company",
+    "subdomain": "john.yourdomain.com",
+    "status": "active"
+  }
+}
+```
+
+**Error Response (401):**
+```json
+{
+  "valid": false,
+  "message": "Invalid or expired token"
+}
+```
+
+**Usage Example:**
+```javascript
+// From tenant dashboard
+fetch('https://yourdomain.com/wp-json/novarax/v1/validate-session', {
+    method: 'POST',
+    headers: {
+        'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+        token: localStorage.getItem('novarax_token'),
+        subdomain: window.location.hostname
+    })
+})
+.then(response => response.json())
+.then(data => {
+    if (data.valid) {
+        console.log('Session valid!', data.user);
+    } else {
+        // Redirect to login
+        window.location.href = 'https://yourdomain.com/login';
+    }
+});
+```
+
+---
+
+### 2. **Check License**
+
+**Endpoint:** `POST /check-license`
+
+**Purpose:** Verify if a tenant has access to a specific module
+
+**Authentication:** Required (JWT or API Key)
+
+**Request Body:**
+```json
+{
+  "tenant_id": 45,
+  "module_slug": "money-manager"
+}
+```
+
+**Success Response (200):**
+```json
+{
+  "valid": true,
+  "module": {
+    "slug": "money-manager",
+    "name": "Money Manager",
+    "version": "1.0.0",
+    "status": "active",
+    "activated_at": "2024-01-15 10:30:00",
+    "expires_at": "2025-01-15 10:30:00"
+  }
+}
+```
+
+**No License Response (403):**
+```json
+{
+  "valid": false,
+  "message": "No active license for this module",
+  "module": "money-manager"
+}
+```
+
+**Usage Example (PHP - From Tenant Dashboard):**
+```php
+<?php
+// Check if user can access Money Manager module
+$tenant_id = get_option('novarax_tenant_id');
+$token = $_COOKIE['novarax_auth_token'];
+
+$response = wp_remote_post('https://yourdomain.com/wp-json/novarax/v1/check-license', array(
+    'headers' => array(
+        'Authorization' => 'Bearer ' . $token,
+        'Content-Type' => 'application/json',
+    ),
+    'body' => json_encode(array(
+        'tenant_id' => $tenant_id,
+        'module_slug' => 'money-manager',
+    )),
+));
+
+$body = json_decode(wp_remote_retrieve_body($response), true);
+
+if ($body['valid']) {
+    // Allow access to module
+    require_once WP_PLUGIN_DIR . '/novarax-money-manager/novarax-money-manager.php';
+} else {
+    // Show upgrade message
+    wp_die('Please subscribe to Money Manager to access this feature.');
+}
+```
+
+---
+
+### 3. **Get Tenant Info**
+
+**Endpoint:** `GET /tenant-info`
+
+**Purpose:** Get detailed information about a tenant
+
+**Authentication:** Required
+
+**Query Parameters:**
+- `tenant_id` (int) - Tenant ID
+- OR `subdomain` (string) - Tenant subdomain
+
+**Request:**
+```
+GET /tenant-info?tenant_id=45
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+```
+
+**Success Response (200):**
+```json
+{
+  "tenant": {
+    "id": 45,
+    "username": "john",
+    "account_name": "John's Company",
+    "company_name": "Acme Corp",
+    "subdomain": "john.yourdomain.com",
+    "status": "active",
+    "storage_used": 1048576000,
+    "storage_limit": 5368709120,
+    "user_limit": 10,
+    "created_at": "2024-01-15 10:30:00",
+    "last_login": "2024-11-06 14:22:10"
+  },
+  "user": {
+    "id": 123,
+    "email": "john@example.com",
+    "display_name": "John Doe"
+  },
+  "modules": [
+    {
+      "slug": "money-manager",
+      "name": "Money Manager",
+      "status": "active",
+      "expires_at": "2025-01-15 10:30:00"
+    },
+    {
+      "slug": "crm",
+      "name": "CRM",
+      "status": "active",
+      "expires_at": "2025-01-15 10:30:00"
+    }
+  ]
+}
+```
+
+**Usage Example:**
+```javascript
+// Get current tenant information
+const tenantId = 45;
+
+fetch(`https://yourdomain.com/wp-json/novarax/v1/tenant-info?tenant_id=${tenantId}`, {
+    headers: {
+        'Authorization': 'Bearer ' + authToken
+    }
+})
+.then(response => response.json())
+.then(data => {
+    console.log('Tenant:', data.tenant);
+    console.log('Active Modules:', data.modules);
+    
+    // Show storage usage
+    const usedGB = (data.tenant.storage_used / 1073741824).toFixed(2);
+    const limitGB = (data.tenant.storage_limit / 1073741824).toFixed(2);
+    document.getElementById('storage').textContent = `${usedGB} GB / ${limitGB} GB`;
+});
+```
+
+---
+
+### 4. **Get Module Status**
+
+**Endpoint:** `GET /module-status`
+
+**Purpose:** Get status of all modules for a tenant
+
+**Authentication:** Required
+
+**Query Parameters:**
+- `tenant_id` (int) - Tenant ID
+
+**Request:**
+```
+GET /module-status?tenant_id=45
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+```
+
+**Success Response (200):**
+```json
+{
+  "tenant_id": 45,
+  "modules": [
+    {
+      "slug": "money-manager",
+      "name": "Money Manager",
+      "status": "active",
+      "has_access": true,
+      "activated_at": "2024-01-15 10:30:00",
+      "expires_at": "2025-01-15 10:30:00",
+      "grace_period_ends": null
+    },
+    {
+      "slug": "crm",
+      "name": "CRM",
+      "status": "expired",
+      "has_access": true,
+      "activated_at": "2024-01-15 10:30:00",
+      "expires_at": "2024-10-15 10:30:00",
+      "grace_period_ends": "2024-10-22 10:30:00"
+    }
+  ],
+  "checked_at": "2024-11-06 14:25:00"
+}
+```
+
+**Usage Example:**
+```php
+<?php
+// Check all module statuses on tenant dashboard load
+function novarax_check_module_statuses() {
+    $tenant_id = get_option('novarax_tenant_id');
+    $api_url = 'https://yourdomain.com/wp-json/novarax/v1/module-status?tenant_id=' . $tenant_id;
+    
+    $response = wp_remote_get($api_url, array(
+        'headers' => array(
+            'Authorization' => 'ApiKey ' . get_option('novarax_api_key'),
+        ),
+    ));
+    
+    if (is_wp_error($response)) {
+        return false;
+    }
+    
+    $body = json_decode(wp_remote_retrieve_body($response), true);
+    $active_plugins = array();
+    
+    foreach ($body['modules'] as $module) {
+        if ($module['has_access']) {
+            $active_plugins[] = $module['slug'] . '/' . $module['slug'] . '.php';
+        }
+    }
+    
+    // Update active plugins
+    update_option('active_plugins', $active_plugins);
+    
+    return $body;
+}
+
+// Run this on every page load (with caching)
+add_action('init', 'novarax_check_module_statuses');
+```
+
+---
+
+### 5. **Verify Access**
+
+**Endpoint:** `POST /verify-access`
+
+**Purpose:** Quick check if a tenant/user combination has access
+
+**Authentication:** Required
+
+**Request Body:**
+```json
+{
+  "tenant_id": 45,
+  "user_id": 123
+}
+```
+
+**Success Response (200):**
+```json
+{
+  "access": true,
+  "tenant_id": 45,
+  "status": "active"
+}
+```
+
+**Access Denied Response (403):**
+```json
+{
+  "access": false,
+  "message": "Tenant account is suspended",
+  "status": "suspended"
+}
+```
+
+---
+
+### 6. **Update Activity**
+
+**Endpoint:** `POST /activity`
+
+**Purpose:** Record tenant activity for analytics
+
+**Authentication:** Required
+
+**Request Body:**
+```json
+{
+  "tenant_id": 45,
+  "type": "login",
+  "data": {
+    "user_agent": "Mozilla/5.0...",
+    "ip_address": "192.168.1.1"
+  }
+}
+```
+
+**Success Response (200):**
+```json
+{
+  "success": true,
+  "timestamp": "2024-11-06 14:30:00"
+}
+```
+
+---
+
+## 🔑 API Key Management
+
+### Generate API Key for Tenant
+
+```php
+<?php
+$auth = new NovaRax_API_Authentication();
+
+// Generate API key for tenant
+$result = $auth->generate_api_key(
+    45, // tenant_id
+    array('check_license', 'get_module_status'), // permissions
+    365 // expires in 365 days (0 = never)
+);
+
+if ($result['success']) {
+    echo "API Key: " . $result['api_key'] . "\n";
+    echo "Secret: " . $result['secret'] . "\n";
+    echo "IMPORTANT: Store the secret securely!\n";
+}
+```
+
+### Store API Key on Tenant Dashboard
+
+```php
+<?php
+// After tenant is provisioned, store API key
+update_option('novarax_api_key', $api_key);
+update_option('novarax_api_secret', $secret); // Encrypt this!
+update_option('novarax_tenant_id', $tenant_id);
+```
+
+---
+
+## 🧪 Testing the API
+
+### Test with cURL
+
+```bash
+# Test validate-session
+curl -X POST https://yourdomain.com/wp-json/novarax/v1/validate-session \
+  -H "Content-Type: application/json" \
+  -d '{
+    "token": "YOUR_JWT_TOKEN",
+    "subdomain": "john.yourdomain.com"
+  }'
+
+# Test check-license
+curl -X POST https://yourdomain.com/wp-json/novarax/v1/check-license \
+  -H "Authorization: ApiKey novarax_your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "tenant_id": 45,
+    "module_slug": "money-manager"
+  }'
+
+# Test get-tenant-info
+curl https://yourdomain.com/wp-json/novarax/v1/tenant-info?tenant_id=45 \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+```
+
+### Test with Postman
+
+1. **Import Collection:** Create new collection "NovaRax API"
+2. **Set Base URL:** `{{base_url}}/wp-json/novarax/v1`
+3. **Add Authorization:** Bearer Token or API Key
+4. **Test Each Endpoint**
+
+---
+
+## 📊 Rate Limiting
+
+- Default: **1000 requests per hour** per API key
+- Exceeding limit returns `429 Too Many Requests`
+- Rate limits reset every hour
+- Contact admin to increase limits
+
+---
+
+## 🛡️ Security Best Practices
+
+1. **Always use HTTPS** - Never send tokens over HTTP
+2. **Store secrets securely** - Encrypt API secrets in database
+3. **Rotate API keys** - Generate new keys periodically
+4. **Use JWT for sessions** - Short expiration (24 hours)
+5. **Validate on every request** - Check license status frequently
+6. **Log all API calls** - Monitor for suspicious activity
+
+---
+
+## ❌ Error Codes
+
+| Status | Meaning |
+|--------|---------|
+| 200 | Success |
+| 400 | Bad Request - Missing parameters |
+| 401 | Unauthorized - Invalid token/API key |
+| 403 | Forbidden - No access/license |
+| 404 | Not Found - Tenant/module not found |
+| 429 | Too Many Requests - Rate limit exceeded |
+| 500 | Server Error |
+
+---
+
+## 🚀 Next Steps
+
+Now that the API is ready, you need to:
+
+1. **Create API directory** and upload these files
+2. **Test endpoints** using the examples above
+3. **Build tenant bootstrap** plugin that uses these APIs
+4. **Implement license checking** on tenant dashboard
+
+Would you like me to create the tenant-side bootstrap plugin next? 🎯
