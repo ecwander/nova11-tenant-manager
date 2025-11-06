@@ -1,0 +1,320 @@
+/* NovaRax Admin Styles */
+
+/* Dashboard Stats Grid */
+.novarax-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+    margin: 20px 0;
+}
+
+.novarax-stat-card {
+    background: #fff;
+    border: 1px solid #c3c4c7;
+    border-radius: 4px;
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+}
+
+.novarax-stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+}
+
+.novarax-stat-primary::before { background: #0073aa; }
+.novarax-stat-success::before { background: #46b450; }
+.novarax-stat-warning::before { background: #f0b849; }
+.novarax-stat-danger::before { background: #dc3232; }
+
+.novarax-stat-icon {
+    font-size: 36px;
+    opacity: 0.3;
+    position: absolute;
+    right: 20px;
+    top: 20px;
+}
+
+.novarax-stat-content h3 {
+    font-size: 32px;
+    font-weight: 600;
+    margin: 0 0 5px 0;
+}
+
+.novarax-stat-content p {
+    margin: 0;
+    color: #646970;
+    font-size: 14px;
+}
+
+.novarax-stat-link {
+    display: inline-block;
+    margin-top: 10px;
+    color: #2271b1;
+    text-decoration: none;
+    font-size: 13px;
+}
+
+/* Dashboard Grid */
+.novarax-dashboard-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.novarax-dashboard-column {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+/* Widgets */
+.novarax-widget {
+    background: #fff;
+    border: 1px solid #c3c4c7;
+    border-radius: 4px;
+}
+
+.novarax-widget-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    border-bottom: 1px solid #c3c4c7;
+}
+
+.novarax-widget-header h2 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.novarax-widget-content {
+    padding: 20px;
+}
+
+/* Status Badges */
+.novarax-status-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #fff;
+    text-transform: uppercase;
+}
+
+.novarax-status-active { background: #46b450; }
+.novarax-status-pending { background: #f0b849; }
+.novarax-status-suspended { background: #dc3232; }
+.novarax-status-cancelled { background: #999; }
+
+/* Storage Bar */
+.novarax-storage-bar {
+    height: 8px;
+    background: #f0f0f1;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 5px;
+}
+
+.novarax-storage-bar-fill {
+    height: 100%;
+    transition: width 0.3s ease;
+}
+
+/* Quick Actions */
+.novarax-quick-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+}
+
+.novarax-quick-action {
+    display: flex;
+    align-items: center;
+    padding: 12px 15px;
+    background: #f6f7f7;
+    border-radius: 4px;
+    text-decoration: none;
+    color: #2c3338;
+    transition: background 0.2s ease;
+}
+
+.novarax-quick-action:hover {
+    background: #e8eaeb;
+}
+
+.novarax-quick-action .dashicons {
+    margin-right: 10px;
+    font-size: 20px;
+}
+
+/* System Status */
+.novarax-system-status {
+    width: 100%;
+}
+
+.novarax-system-status td {
+    padding: 10px 0;
+}
+
+.novarax-system-status tr:not(:last-child) td {
+    border-bottom: 1px solid #f0f0f1;
+}
+
+/* Queue Stats */
+.novarax-queue-stat {
+    background: #f6f7f7;
+    padding: 15px;
+    border-radius: 4px;
+}
+
+.novarax-queue-stat .label {
+    display: block;
+    font-size: 12px;
+    color: #646970;
+    margin-bottom: 5px;
+}
+
+.novarax-queue-stat .value {
+    display: block;
+    font-size: 24px;
+    font-weight: 600;
+    color: #2c3338;
+}
+
+/* Tenant Form */
+.novarax-tenant-form .form-table th {
+    width: 200px;
+}
+
+#username-feedback,
+#email-feedback {
+    font-weight: 600;
+    margin-top: 5px;
+}
+
+#username-feedback.available,
+#email-feedback.available {
+    color: #46b450;
+}
+
+#username-feedback.unavailable,
+#email-feedback.unavailable {
+    color: #dc3232;
+}
+
+#subdomain-preview {
+    font-size: 16px;
+    padding: 8px;
+    background: #f6f7f7;
+    border-radius: 4px;
+}
+
+/* Tenant View */
+.novarax-tenant-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #c3c4c7;
+}
+
+.novarax-tenant-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.novarax-tenant-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+/* Responsive */
+@media (max-width: 1200px) {
+    .novarax-dashboard-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .novarax-tenant-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .novarax-stats-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .novarax-queue-stats {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Loading States */
+.novarax-loading {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.novarax-spinner {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 3px solid rgba(0, 0, 0, 0.1);
+    border-radius: 50%;
+    border-top-color: #0073aa;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Notices */
+.novarax-notice {
+    padding: 15px;
+    margin: 20px 0;
+    border-left: 4px solid;
+    border-radius: 4px;
+}
+
+.novarax-notice-success {
+    background: #ecf7ed;
+    border-color: #46b450;
+    color: #2d5c2e;
+}
+
+.novarax-notice-error {
+    background: #f8d7da;
+    border-color: #dc3232;
+    color: #8b0000;
+}
+
+.novarax-notice-warning {
+    background: #fff8e5;
+    border-color: #f0b849;
+    color: #826200;
+}
+
+/* Tables */
+.novarax-widget table.widefat {
+    margin: 0;
+}
+
+.novarax-widget table.widefat th {
+    font-weight: 600;
+    width: 40%;
+}
+
+.novarax-widget table.widefat td {
+    padding: 12px 10px;
+}
